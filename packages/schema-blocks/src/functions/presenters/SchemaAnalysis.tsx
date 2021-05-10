@@ -8,9 +8,9 @@ import { __ } from "@wordpress/i18n";
 import { SvgIcon } from "@yoast/components";
 
 import { createAnalysisMessages, SidebarWarning } from "./SidebarWarningPresenter";
-import { ClientIdValidation, YOAST_SCHEMA_BLOCKS_STORE_NAME } from "../redux";
 import BlockSuggestions from "./BlockSuggestionsPresenter";
 import { BlockValidationResult } from "../../core/validation";
+import { getValidationResults } from "../validators";
 
 interface InnerBlocksSidebarProps {
 	currentBlock: BlockInstance;
@@ -19,36 +19,7 @@ interface InnerBlocksSidebarProps {
 }
 
 /**
- * Retrieves the validation results for the block with the given client ID from the Redux store.
- *
- * @param clientId The client ID of the block to retrieve the validation results for.
- *
- * @returns The validation results.
- */
-function useValidationResults( clientId: string ): BlockValidationResult {
-	return useSelect( select => {
-		const results: ClientIdValidation = select( YOAST_SCHEMA_BLOCKS_STORE_NAME ).getSchemaBlocksValidationResults();
-		if ( ! results ) {
-			return null;
-		}
-
-		return results[ clientId ];
-	}, [ clientId ] );
-}
-
-/**
- * Retrieves the latest block version from the WordPress store.
- *
- * @param clientId The client ID of the block to retrieve the latest version of.
- *
- * @returns The latest version of the block.
- */
-function useBlock( clientId: string ): BlockInstance {
-	return useSelect( select => select( "core/block-editor" ).getBlock( clientId ), [ clientId ] );
-}
-
-/**
- * Inner blocks sidebar component.
+ * present the  component.
  *
  * @param props The properties.
  *
@@ -56,28 +27,27 @@ function useBlock( clientId: string ): BlockInstance {
  *
  * @constructor
  */
-export function InnerBlocksSidebar( props: InnerBlocksSidebarProps ): ReactElement {
-	const block = useBlock( props.currentBlock.clientId );
-	const validationResults = useValidationResults( props.currentBlock.clientId );
+export function RenderSchemaAnalysis(props: InnerBlocksSidebarProps): ReactElement {
+	const validationResults = getValidationResults();
 
 	let warnings: SidebarWarning[] = [];
 
-	if ( validationResults ) {
-		warnings = createAnalysisMessages( validationResults );
+	if (validationResults) {
+		warnings = createAnalysisMessages(validationResults);
 	}
 
-	return <Fragment key={ "innerblocks-sidebar-" + block.clientId }>
+	return <Fragment key={"schema-blocks-analysis"}>
 		<SidebarHeader />
-		<WarningList warnings={ warnings } />
+		<WarningList warnings={warnings} />
 		<BlockSuggestions
-			title={ __( "Required Blocks", "yoast-schema-blocks" ) }
-			block={ block }
-			suggestions={ props.requiredBlocks }
+			title={__("Required Blocks", "yoast-schema-blocks")}
+			block={block}
+			suggestions={props.requiredBlocks}
 		/>
 		<BlockSuggestions
-			title={ __( "Recommended Blocks", "yoast-schema-blocks" ) }
-			block={ block }
-			suggestions={ props.recommendedBlocks }
+			title={__("Recommended Blocks", "yoast-schema-blocks")}
+			block={block}
+			suggestions={props.recommendedBlocks}
 		/>
 	</Fragment>;
 }
@@ -105,8 +75,8 @@ function SidebarHeader(): ReactElement {
 	return (
 		<div className="yoast-block-sidebar-header">
 			<div className="yoast-block-sidebar-title">
-				{ __( "Blocks for Schema output", "yoast-schema-blocks" ) }
-				<span className="yoast-inline-icon">{ questionMarkIcon }</span>
+				{__("Blocks for Schema output", "yoast-schema-blocks")}
+				<span className="yoast-inline-icon">{questionMarkIcon}</span>
 			</div>
 		</div>
 	);
@@ -119,13 +89,13 @@ function SidebarHeader(): ReactElement {
  *
  * @returns A ReactElement containing the list of warnings.
  */
-function WarningList( props: WarningListProps ): ReactElement {
+function WarningList(props: WarningListProps): ReactElement {
 	return (
 		<Fragment>
 			<div className="yoast-block-sidebar-warnings">
-				<div className="yoast-block-sidebar-title">{ __( "Analysis", "yoast-schema-blocks" ) }</div>
+				<div className="yoast-block-sidebar-title">{__("Analysis", "yoast-schema-blocks")}</div>
 				<ul className="yoast-block-sidebar-warnings">
-					{ ...props.warnings.map( warning => <Warning warning={ warning } key={ warning.text } /> ) }
+					{...props.warnings.map(warning => <Warning warning={warning} key={warning.text} />)}
 				</ul>
 			</div>
 		</Fragment>
@@ -143,15 +113,15 @@ interface WarningProps {
  *
  * @returns The formatted warning message.
  */
-function Warning( props: WarningProps ): ReactElement {
+function Warning(props: WarningProps): ReactElement {
 	return (
 		<li className="yoast-block-sidebar-warning">
 			<SvgIcon
 				icon="circle"
-				color={ props.warning.color }
+				color={props.warning.color}
 				size="13px"
 				className="yoast-block-sidebar-warning-dot"
-			/>{ props.warning.text }
+			/>{props.warning.text}
 		</li>
 	);
 }
